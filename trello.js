@@ -33,18 +33,19 @@ function getCheckLists(data) {
 
 
 
-/******************* DOM MANIPULATION ******************/
+/******************* DOM MANIPULATION******************/
 
 
 getBoardList(2, 0);
 
 function generateCheckitems(items) {
-    console.log(items);
-    var val = 1;
-    items.map(item => {
-        let i = `<li><input class="check-items" id=${item.id} type="checkbox"><a>${item.name}</a><i type="button">&times;</i></li><hr>`;
 
-        $("#check-lists").append(i).css({
+    /******************* DOM MANIPULATION FETCH "GET" ******************/
+
+    items.map(item => {
+        let list = `<li><input class="check-items" id=${item.id} type="checkbox"><a>${item.name}</a><button class=".btn"  id=${item.id} type="button">&times;</button></li><hr>`;
+
+        $("#check-lists").append(list).css({
             "list-style": "none",
             "background-color": "#d9eaad",
             "font-size": "20px",
@@ -75,37 +76,69 @@ function generateCheckitems(items) {
         "justify-content": "space-between",
         "color": "red"
     });
+    $("button").css({
+       "background-color": "azure",
+       "cursor":"pointer",
+       "border-style":"none",
+       "outline":"none",
+       "color":"green"
 
+    })
 
+/*************************DOM MANIPULATION UPDATE "PUT" ********************************* */
 
-    $("input").on("click", function () {
-                if ($(this).is(':checked')) {
-                    fetch(`https://api.trello.com/1/cards/${cardId}/checkItem/${this.id}?state=complete&key=${key}&token=${token}`, {
-                            method: 'PUT'
-                        })
-                        .then(data => data.json())
-                        .then((Object) => {
-                            Object["state"] = "complete"
-                        })
-                        .then(() => $(`#${this.id}`).next().css({
-                                    "text-decoration": "line-through",
-                                    "color": "gray"})
-                                    )
-                            }
-                            else {
-                                fetch(`https://api.trello.com/1/cards/${cardId}/checkItem/${this.id}?state=incomplete&key=${key}&token=${token}`, {
-                                        method: 'PUT'
-                                    })
-                                    .then(data => data.json())
-                                    .then((Object) => {
-                                        Object["state"] = "incomplete"
-                                    })
-                                    .then(() => $(`#${this.id}`).next().css({
-                                        "text-decoration": "none",
-                                        "color": "red"})
-                                        )
-                            }
-                        });
+    $(".check-items").on("click", function () {
+    if ($(this).is(':checked')) {
+        fetch(`https://api.trello.com/1/cards/${cardId}/checkItem/${this.id}?state=complete&key=${key}&token=${token}`, {
+                method: 'PUT'
+            })
+            .then(data => data.json())
+            .then((Object) => {
+                Object["state"] = "complete"
+            })
+            .then(() => $(`#${this.id}`).next().css({
+                        "text-decoration": "line-through",
+                        "color": "gray"})
+                        )
+    }
+    else {
+        fetch(`https://api.trello.com/1/cards/${cardId}/checkItem/${this.id}?state=incomplete&key=${key}&token=${token}`, {
+                method: 'PUT'
+            })
+            .then(data => data.json())
+            .then((Object) => {
+                Object["state"] = "incomplete"
+            })
+            .then(() => $(`#${this.id}`).next().css({
+                "text-decoration": "none",
+                "color": "red"})
+                )
+    }
+    });
 
+/******************* DOM MANIPULATION REMOVE "DELETE" ******************/
+$(".btn").on("click", function () {
+    fetch(`https://api.trello.com/1/cards/${cardId}/checkItem/${this.id}?key=${key}&token=${token}`, {
+        method: 'DELETE'
+    })
+    .then(()=> $(this).parent().hide() && $(this).parent().next().hide())
+})
 
-            }
+/**************************DOM MANIPULATION CREATE "POST" ***************************** */
+let create=`<div><input class="chk" id="item" type=""><button class="chk" id="add">ADD CHECKITEMS</button><div>`
+$("#check-lists").prepend(create)
+$("div").css({
+    "margin":"25px auto",
+    "display":"flex",
+    "justify-content":"space-between"
+}).width("100%")
+$("#add").css({
+    "border-radius":"50px",
+    "background-color": "azure",
+    "color":"green",
+    "border-style":"none",
+    "outline":"none",
+    "padding":"5px",
+    "margin-left":"15px"
+})
+}
