@@ -17,7 +17,9 @@ function getCardLists(data, c) {
     fetch(`https://api.trello.com/1/lists/${data['id']}/cards?key=${key}&token=${token}`)
         .then(response => response.json())
         .then(data => data.map(list => list))
-        .then(data => {getCheckLists(data[c]), getOptions(data[c])});
+        .then(data => {
+            getCheckLists(data[c]), getOptions(data[c])
+        });
 }
 
 function getCheckLists(data) {
@@ -37,7 +39,7 @@ function getCheckLists(data) {
 function getOptions(data) {
     fetch(`https://api.trello.com/1/cards/${data['id']}/checklists?key=${key}&token=${token}`)
         .then(response => response.json())
-        .then(data => data.map(data=>{
+        .then(data => data.map(data => {
             let option = `<option value=${data['id']}>${data["name"]}</option>`;
             $("#select").append(option);
         }));
@@ -50,13 +52,13 @@ function getOptions(data) {
 getBoardList(2, 0);
 
 function generateCheckitems(items) {
-    console.log(items);
+   // console.log(items);
     items.map(item => {
-
-getItems(item)});
+        getItems(item)
+    });
     /******************* DOM MANIPULATION FETCH "GET" ******************/
-function getItems(item){
-    // items.map(item => {
+    function getItems(item) {
+        // items.map(item => {
         let list = `<li><input class="check-items" id=${item.id} type="checkbox"><a>${item.name}</a><button class="btn"  id=${item.id} type="button">&times;</button></li>`;
 
         $("#check-lists").append(list).css({
@@ -83,24 +85,24 @@ function getItems(item){
                         "text-decoration": "none"
                     })
             });
-    
-    $("#check-lists>li").css({
-        "display": "flex",
-        "flex-flow": "row nowrap",
-        "justify-content": "space-between",
-        "color": "red",
-        "cursor": "pointer",
-        "margin-top": "10px"
-    });
-    $("button").css({
-        "background-color": "azure",
-        "cursor": "pointer",
-        "border-style": "none",
-        "outline": "none",
-        "color": "green",
 
-    })
-}
+        $("#check-lists>li").css({
+            "display": "flex",
+            "flex-flow": "row nowrap",
+            "justify-content": "space-between",
+            "color": "red",
+            "cursor": "pointer",
+            "margin-top": "10px"
+        });
+        $("button").css({
+            "background-color": "azure",
+            "cursor": "pointer",
+            "border-style": "none",
+            "outline": "none",
+            "color": "green",
+
+        })
+    }
     /*************************DOM MANIPULATION UPDATE "PUT" ********************************* */
     $(".check-items").on("click", function () {
         if ($(this).is(':checked')) {
@@ -142,11 +144,11 @@ function getItems(item){
 
     let create = `<li><input class="chk" id="item" type=""><button class="chk" id="add">ADD ITEMS</button><li>`
     $("#check-lists").prepend(create)
-  $("#select").css({
-      "position":"absolute",
-      "top":"200px",
-      "left":"500px"
-  })
+    $("#select").css({
+        "position": "absolute",
+        "top": "200px",
+        "left": "500px"
+    })
     $("#add").css({
         "cursor": "pointer",
         "border-radius": "50px",
@@ -166,18 +168,18 @@ function getItems(item){
     $("#select").css({
         "background-color": "azure",
         "border-style": "none",
-        "height":"30px"
+        "height": "30px"
 
     })
     $("#add").on("click", function () {
         var s = document.getElementsByName('org_id')[0];
         s.addEventListener("change", value);
-        var value = s.options[s.selectedIndex].value;    
+        var value = s.options[s.selectedIndex].value;
         var input = $("#item").val();
         fetch(`https://api.trello.com/1/checklists/${value}/checkItems?name=${input}&pos=bottom&checked=false&key=${key}&token=${token}`, {
-            method: 'POST'
-        }).then(res => res.json())
-        .then(data =>getItems(data))
+                method: 'POST'
+            }).then(res => res.json())
+            .then(data => getItems(data))
 
     })
 
