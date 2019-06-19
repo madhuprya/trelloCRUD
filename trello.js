@@ -68,7 +68,7 @@ function generateCheckitems(items) {
             "padding": "100px 300px",
             "margin": "100px 300px",
             "cursor": "pointer"
-        }).height("300px").width("500px");
+        }).height("auto").width("500px");
 
 
         fetch(`https://api.trello.com/1/cards/${cardId}/checkItem/${item.id}/`)
@@ -172,7 +172,7 @@ function generateCheckitems(items) {
 
     })
     $("#add").on("click", function () {
-        var s = document.getElementsByName('org_id')[0];
+        var s = document.getElementsByName('trello_id')[0];
         s.addEventListener("change", value);
         var value = s.options[s.selectedIndex].value;
         var input = $("#item").val();
