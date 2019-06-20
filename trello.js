@@ -52,14 +52,15 @@ function getOptions(data) {
 getBoardList(2, 0);
 
 function generateCheckitems(items) {
-   // console.log(items);
+    // console.log(items);
     items.map(item => {
         getItems(item)
     });
+    var itemId;
     /******************* DOM MANIPULATION FETCH "GET" ******************/
     function getItems(item) {
-        // items.map(item => {
-        let list = `<li><input class="check-items" id=${item.id} type="checkbox"><a>${item.name}</a><button class="btn"  id=${item.id} type="button">&times;</button></li>`;
+        itemId = "i" + item.id;
+        let list = `<li><input class="check-items" id=${item.id} type="checkbox"><a class="check-edit" id=${itemId}>${item.name}</a><button class="btn"  id=${item.id} type="button">&times;</button></li>`;
 
         $("#check-lists").append(list).css({
             "list-style": "none",
@@ -102,8 +103,40 @@ function generateCheckitems(items) {
             "color": "green",
 
         })
+        
     }
     /*************************DOM MANIPULATION UPDATE "PUT" ********************************* */
+    $(".check-edit").dblclick(function (e) {
+        var val;
+        var item_id=(this.id).substring(1);
+        e.stopPropagation();
+        var currentEle = $(this);
+        var value = $(this).html();
+        $(currentEle).html('<input class="newVal" type="text" value="' + value + '" />');
+        $(".newVal").css({
+            "outline": "none"
+        });
+        $(".newVal").focus();
+        $(".newVal").keyup(function (event) {
+           
+            if (event.keyCode == 13) {
+                val=$(".newVal").val();
+                fetch(`https://api.trello.com/1/cards/${cardId}/checkItem/${item_id}?name=${val}&key=${key}&token=${token}`,{
+                method:'PUT'
+            })
+                .then(data => data.json())
+                .then((data) => {
+                   
+                    console.log(val);
+                    data["name"]=val;
+                   
+                })
+                .then(()=> $(currentEle).html($(".newVal").val().trim()))
+
+            }
+
+        })
+    })
     $(".check-items").on("click", function () {
         if ($(this).is(':checked')) {
             fetch(`https://api.trello.com/1/cards/${cardId}/checkItem/${this.id}?state=complete&key=${key}&token=${token}`, {
@@ -143,13 +176,13 @@ function generateCheckitems(items) {
     /**************************DOM MANIPULATION CREATE "POST" ***************************** */
 
     let create = `<li><input class="chk" id="item" type=""><button class="chk" id="add">ADD ITEMS</button><li>`
-    $("#check-lists").prepend(create)
+    $("#check-lists").prepend(create) 
     $("#select").css({
         "position": "absolute",
         "top": "200px",
         "left": "500px"
     })
-    $("#add").css({
+     $("#add").css({
         "cursor": "pointer",
         "border-radius": "50px",
         "background-color": "azure",
@@ -158,19 +191,19 @@ function generateCheckitems(items) {
         "outline": "none",
         "padding": "5px",
         "margin-left": "10px"
-    })
+    }) 
     $("#item").css({
         "width": "300px",
         "outline": "none",
         "padding": "5px",
         "color": "red"
-    })
+    }) 
     $("#select").css({
         "background-color": "azure",
         "border-style": "none",
         "height": "30px"
 
-    })
+    }) 
     $("#add").on("click", function () {
         var s = document.getElementsByName('trello_id')[0];
         s.addEventListener("change", value);
@@ -182,5 +215,6 @@ function generateCheckitems(items) {
             .then(data => getItems(data))
 
     })
+    /*********************************UPDATE************************* */
 
 }
