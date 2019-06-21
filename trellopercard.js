@@ -1,250 +1,205 @@
 var token = "70f361bbb63ef8ef719f5adbf766703d555b775d69e9f368b4af1d0894581f59";
 var key = "528ef6da60343fa8086bac0831fd43aa";
 var trelloId = "uG0ypKxz";
-
-var endpoints = `https://api.trello.com/1/boards/${trelloId}/lists?key=${key}&token=${token}`;
+/************************GET REQUEST*********************/
 
 function getBoardList(bInd) {
-    fetch(endpoints)
+    return fetch(`https://api.trello.com/1/boards/${trelloId}/lists?key=${key}&token=${token}`)
         .then(response => response.json())
-        .then(data => data.map(list => list))
-        .then(data => getCardLists(data[bInd]));
+        .then(data => data[bInd])
+        .catch((error) => console.log(`Board List is not available${error}`));
 }
 
-function getCardLists(data) {
-    $("#trello-board>p").css({
-        "text-align": "center",
-        "font-weight": "bold",
-        "font-size": "3em"
+function getCardLists(boardId) {
+    return fetch(`https://api.trello.com/1/lists/${boardId}/cards?key=${key}&token=${token}`)
+        .then(response => response.json())
+        .catch((error) => console.log(`Card List is not available${error}`));
+}
+
+function getCheckLists(cardId) {
+    // console.log(cardId);
+    return fetch(`https://api.trello.com/1/cards/${cardId}/checklists?key=${key}&token=${token}`)
+        .then(response => response.json())
+        .catch((error) => console.log(`Check List is not available${error}`));
+}
+
+function getCheckitems(checklistId) {
+    //console.log(checklistId)
+    return fetch(`https://api.trello.com/1/checklists/${checklistId}/checkItems?key=${key}&token=${token}`)
+        .then((response) => response.json())
+        .catch((error) => console.log(`Check item is not available${error}`));
+}
+/***************************DOM ELEMENT*****************************/
+function CardsDomElem(cards) {
+    cards.forEach(card => {
+        let cardDiv = `<div id=${card["id"]}>${card["name"]}</div>`;
+        let checklistDropdown = `<select name="${card["id"]}" class="${card["id"]}"></select>`;
+        let createCheckItem = `<div><input id="item" type=""><button class="add">ADD ITEMS</button><div>`
+
+        $("#trello-board").append(cardDiv);
+        $(`#${card["id"]}`).append(checklistDropdown);
+        $(`#${card["id"]}`).append(createCheckItem);
     })
-    fetch(`https://api.trello.com/1/lists/${data['id']}/cards?key=${key}&token=${token}`)
-        .then(response => response.json())
-        .then(data => data.map(list => list))
-        .then(data => {
-            data.map(data => {
-                var listId = data.id + "madhu";
-                $("#trello-board").append(`<div id="${data.id}">${data.name}</div>`).css({
-                    "background-color": "#D0D9DB",
-                    "border": "1px solid green",
-                    "width": "1000px",
-                    "margin": "auto",
-                }).height("auto");
-                $(`#${data.id}`).css({
-                    "color": "red",
-                    "font-size": "1.5em"
+
+}
+
+function CheckListsDomElem(checklists) {
+    checklists.forEach(checklist => {
+        $(`#${checklist['idCard']}`).attr("idcard", checklist['idCard']);
+        let checkItemList = `<ul id="${checklist['id'] }" idcard="${checklist['idCard']}"></ul>`
+        $(`#${checklist['idCard']}`).append(checkItemList);
+        let checkListOption = `<option value=${checklist['id']}>${checklist["name"]}</option>`;
+        $(`.${checklist['idCard']}`).append(checkListOption);
+    })
+    createNewItems();
+
+}
+
+function CheckItemsDomElem(checkitems) {
+    checkitems.forEach(checkitem => {
+        $(`#${checkitem['idChecklist']}`).attr("itemid", checkitem.id);
+        let id = "i" + checkitem.id;
+        let checkItem = `<li class="checkitem"><input class="check-items" itemid="${checkitem.id}" id="${id}" type="checkbox"><a  class="check-edit"  id=${checkitem.id}>${checkitem.name}</a><button class="btn" itemid="${checkitem.id}"  type="button">&times;</button></li>`;
+        $(`#${checkitem["idChecklist"]}`).append(checkItem);
+        if (checkitem["state"] === "complete") {
+            $(`#${id}`).prop("checked", true) &&
+                $(`#${checkitem.id}`).css({
+                    "text-decoration": "line-through",
+                    "color": "gray"
                 })
-                getOptions(data, listId);
+        } else {
+            $(`#${id}`).prop("checked", false) &&
+                $(`#${checkitem.id}`).css({
+                    "text-decoration": "none",
+                    "color": "red"
+                })
+        }
 
-            })
-        });
+    })
+    updateItemName();
+    UpdateStatus();
+    deleteItem();
 }
 
-function getOptions(data, listId) {
-    var card = data.id;
-    $(`#${card}`).append(`<select name="${card}" class="${card}"></select>`)
-    $(`.${card}`).css({
-        "background-color": "#DFF2F2",
-        "padding": "10px",
-        "margin-left": "50px",
-        "font-size": "0.8em"
-    }).height("20px");
-    $(`#${card}`).append(`<ul id="${listId}"></ul>`).css({
-        "margin-top": "10px",
-        "background-color": "azure"
-    }).height("auto");
-
-    $(`#${listId}`).css({
-        "background-color": "#DFF2F2"
-    }).height("800px");
-    fetch(`https://api.trello.com/1/cards/${card}/checklists?key=${key}&token=${token}`)
-        .then(response => response.json())
-        .then(data => data.map(list => list['checkItems']))
-        .then(data => data.reduce((accumulator, item) => {
-            item.map(i => accumulator.push(i));
-            return accumulator;
-        }, []))
-        .then(data => generateCheckitems(data, listId, card))
-      
-
-    fetch(`https://api.trello.com/1/cards/${card}/checklists?key=${key}&token=${token}`)
-        .then(response => response.json())
-        .then(data => data.map(data => {
-            let option = `<option value=${data['id']}>${data["name"]}</option>`;
-            $(`.${card}`).append(option);
-        }))
-}
-
-
-getBoardList(2);
-
-/******************* DOM MANIPULATION******************/
-
-
-
-function generateCheckitems(items, id, card) {
-    items.map(item => {
-        getItems(item, id, card);
-    });
-    /******************* DOM MANIPULATION FETCH "GET" ******************/
-    function getItems(item, id, card) {
-        var itemId = "i" + item.id;
-        let list = `<li class="checkitem"><input class="check-items" id=${item.id} type="checkbox"><a class="check-edit" id=${itemId}>${item.name}</a><button class="btn"  id=${item.id} type="button">&times;</button></li>`;
-
-        $(`#${id}`).append(list).css({
-            "list-style": "none",
-            "background-color": "#d9eaad",
-            "font-size": "20px",
-            "padding": "100px 100px",
-            "margin": "100px 0px",
-            "cursor": "pointer"
-        }).height("auto").width("600px");
-        $(".checkitem").css({
-            "display": "flex",
-            "flex-flow": "rwo nowrap",
-            "justify-content": "space-between",
-            "margin-top": "5px"
-        })
-        fetch(`https://api.trello.com/1/cards/${card}/checkItem/${item.id}/`)
-            .then(response => response.json())
-            .then((Object) => {
-                (Object["state"] === "complete") ?
-                $(`#${item.id}`).prop("checked", true) &&
-                    $(`#${item.id}`).next().css({
-                        "text-decoration": "line-through",
-                        "color": "gray"
-                    }):
-                    $(`#${item.id}`).prop("checked", false) &&
-                    $(`#${item.id}`).next().css({
-                        "text-decoration": "none"
-                    })
-            });
-
-        $("#check-lists>li").css({
-            "display": "flex",
-            "flex-flow": "row nowrap",
-            "justify-content": "space-between",
-            "color": "red",
-            "cursor": "pointer",
-            "margin-top": "10px"
-        });
-        $("button").css({
-            "background-color": "azure",
-            "cursor": "pointer",
-            "border-style": "none",
-            "outline": "none",
-            "color": "green",
-
-        })
-    }
-    /*************************DOM MANIPULATION UPDATE "PUT" ********************************* */
-    $(".check-edit").dblclick(function (e) {
+/**********************************REST API CALL************************************** */
+function updateItemName() {
+    $(".check-edit").click(function (e) {
+        let cardid = $(this).parent().parent().attr("idcard")
         var val;
-        var item_id=(this.id).substring(1);
         e.stopPropagation();
-        var currentEle = $(this);
+        var currentElem = $(this);
         var value = $(this).html();
-        $(currentEle).html('<input class="newVal" type="text" value="' + value + '" />');
+        $(currentElem).html('<input class="newVal" type="text" value="' + value + '" />')
         $(".newVal").css({
             "outline": "none"
         });
         $(".newVal").focus();
         $(".newVal").keyup(function (event) {
-           
-            if (event.keyCode == 13) {
-                val=$(".newVal").val();
-                fetch(`https://api.trello.com/1/cards/${card}/checkItem/${item_id}?name=${val}&key=${key}&token=${token}`,{
-                method:'PUT'
-            })
-                .then(data => data.json())
-                .then((data) => {
-                   
-                    console.log(val);
-                    data["name"]=val;
-                   
-                })
-                .then(()=> $(currentEle).html($(".newVal").val().trim()))
 
+            if (event.keyCode == 13) {
+                val = $(".newVal").val();
+                fetch(`https://api.trello.com/1/cards/${cardid}/checkItem/${e.target.id}?name=${val}&key=${key}&token=${token}`, {
+                        method: 'PUT'
+                    })
+                    .then(data => data.json())
+                    .then((data) => {
+                        console.log(val);
+                        data["name"] = val;
+                    })
+                    .then(() => $(currentElem).html($(".newVal").val().trim()))
             }
 
         })
     })
-    $(".check-items").on("click", function () {
+}
+
+function UpdateStatus() {
+    $(".check-items").click(function (e) {
+        let itemid = $(this).attr('itemid');
+        let cardid = $(this).parent().parent().attr("idcard")
         if ($(this).is(':checked')) {
-            fetch(`https://api.trello.com/1/cards/${card}/checkItem/${this.id}?state=complete&key=${key}&token=${token}`, {
+            fetch(`https://api.trello.com/1/cards/${cardid}/checkItem/${itemid}?state=complete&key=${key}&token=${token}`, {
                     method: 'PUT'
                 })
                 .then(data => data.json())
-                .then((Object) => {
-                    Object["state"] = "complete"
+                .then((data) => {
+                    data["state"] = "complete"
                 })
-                .then(() => $(`#${this.id}`).next().css({
+                .then(() => $(`#${itemid}`).css({
                     "text-decoration": "line-through",
                     "color": "gray"
                 }))
         } else {
-            fetch(`https://api.trello.com/1/cards/${card}/checkItem/${this.id}?state=incomplete&key=${key}&token=${token}`, {
+            fetch(`https://api.trello.com/1/cards/${cardid}/checkItem/${itemid}?state=incomplete&key=${key}&token=${token}`, {
                     method: 'PUT'
                 })
                 .then(data => data.json())
-                .then((Object) => {
-                    Object["state"] = "incomplete"
+                .then((data) => {
+                    data["state"] = "incomplete"
                 })
-                .then(() => $(`#${this.id}`).next().css({
+                .then(() => $(`#${itemid}`).css({
                     "text-decoration": "none",
                     "color": "red"
                 }))
         }
     });
 
-    // /******************* DOM MANIPULATION REMOVE "DELETE" ******************/
-    $(".btn").on("click", function () {
-        fetch(`https://api.trello.com/1/cards/${card}/checkItem/${this.id}?key=${key}&token=${token}`, {
+}
+
+function deleteItem() {
+    $(".btn").click(function (e) {
+        let itemid = $(this).attr('itemid');
+        let cardid = $(this).parent().parent().attr("idcard")
+        fetch(`https://api.trello.com/1/cards/${cardid}/checkItem/${itemid}?key=${key}&token=${token}`, {
                 method: 'DELETE'
             })
-            .then(() => $(this).parent().remove() && $(this).parent().next().remove());
+            .then(data => (data.json))
+            .then(() => {
+                $(this).parent().remove() && $(this).parent().next().remove()
+            })
     })
+}
 
-    // /**************************DOM MANIPULATION CREATE "POST" ***************************** */
+function createNewItems(){
 
-    let create = `<li><input class="chk" id="item" type=""><button class="chk" id="add">ADD ITEMS</button><li>`
-    $(`#${id}`).prepend(create)
-    $("#select").css({
-        "position": "absolute",
-        "top": "200px",
-        "left": "500px"
-    })
-    $("#add").css({
-        "cursor": "pointer",
-        "border-radius": "50px",
-        "background-color": "azure",
-        "color": "green",
-        "border-style": "none",
-        "outline": "none",
-        "padding": "5px",
-        "margin-left": "10px"
-    })
-    $("#item").css({
-        "width": "300px",
-        "outline": "none",
-        "padding": "5px",
-        "color": "red"
-    })
-    $("#select").css({
-        "background-color": "azure",
-        "border-style": "none",
-        "height": "30px"
-
-    })
-    $("#add").on("click", function () {
-        var s = document.getElementsByName(`${card}`)[0];
+    $(".add").click( function (e) {
+        let cardid = $(this).parent().parent().attr("id")
+        var s = document.getElementsByName(`${cardid}`)[0];
         s.addEventListener("change", value);
         var value = s.options[s.selectedIndex].value;
-        var input = $("#item").val();
-        fetch(`https://api.trello.com/1/checklists/${value}/checkItems?name=${input}&pos=bottom&checked=false&key=${key}&token=${token}`, {
+        var input = $(this).prev().val();
+       let post= fetch(`https://api.trello.com/1/checklists/${value}/checkItems?name=${input}&pos=bottom&checked=false&key=${key}&token=${token}`, {
                 method: 'POST'
             }).then(res => res.json())
-            .then(data => getItems(data, id, card))
+            Promise.all([post])
+            .then((data)=>{
+                CheckItemsDomElem(data);
+            });
+    })
+}
+/**********************************TRELLO CALL***************************** */
+function TrelloCall() {
+    let cards = getBoardList(2).then(board => {
+        return getCardLists(board["id"]).then(cards => cards.map(card => card))
+    });
 
+    let checklists = cards.then(cards => {
+        return Promise.all(cards.map(v => getCheckLists(v["id"])))
+    });
+    let checklistsObj = checklists.then(v => v.flat())
+
+    let checkItemObj = checklists.then(v => {
+        let arrObj = v.flat();
+        return Promise.all(arrObj.map(v => getCheckitems(v["id"])));
+    })
+
+    let checkitemObj = checkItemObj.then(v => v.flat())
+
+    Promise.all([cards, checklistsObj, checkitemObj]).then((data) => {
+        CardsDomElem(data[0]);
+        CheckListsDomElem(data[1]);
+        CheckItemsDomElem(data[2]);
     })
 
 }
+TrelloCall();
