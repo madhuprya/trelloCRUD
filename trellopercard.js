@@ -59,7 +59,7 @@ function CheckItemsDomElem(checkitems) {
     checkitems.forEach(checkitem => {
         $(`#${checkitem['idChecklist']}`).attr("itemid", checkitem.id);
         let id = "i" + checkitem.id;
-        let checkItem = `<li class="checkitem"><input class="check-items" itemid="${checkitem.id}" id="${id}" type="checkbox"><a  class="check-edit"  id=${checkitem.id}>${checkitem.name}</a><button class="btn" itemid="${checkitem.id}"  type="button">&times;</button></li>`;
+        let checkItem = `<li class="checkitem"><input class="check-items" itemid="${checkitem.id}" id="${id}" type="checkbox"><a data-editable class="check-edit"  id=${checkitem.id}>${checkitem.name}</a><button class="btn" itemid="${checkitem.id}"  type="button">&times;</button></li>`;
         $(`#${checkitem["idChecklist"]}`).append(checkItem);
         if (checkitem["state"] === "complete") {
             $(`#${id}`).prop("checked", true) &&
@@ -83,33 +83,24 @@ function CheckItemsDomElem(checkitems) {
 
 /**********************************REST API CALL************************************** */
 function updateItemName() {
-    $(".check-edit").click(function (e) {
+    $('body').on('click', '[data-editable]', function (e) {
         let cardid = $(this).parent().parent().attr("idcard")
         var val;
-        e.stopPropagation();
-        var currentElem = $(this);
-        var value = $(this).html();
-        $(currentElem).html('<input class="newVal" type="text" value="' + value + '" />')
-        $(".newVal").css({
-            "outline": "none"
-        });
-        $(".newVal").focus();
-        $(".newVal").keyup(function (event) {
-
+        var $el = $(this);
+        var $input = $('<input class="newVal"/>').val($el.text());
+        $el.replaceWith($input);
+        $input.keyup(function (event) {
             if (event.keyCode == 13) {
                 val = $(".newVal").val();
+                var $newval = $(`<a data-editable class="check-edit"  id=${e.target.id}/>`).text(val);
                 fetch(`https://api.trello.com/1/cards/${cardid}/checkItem/${e.target.id}?name=${val}&key=${key}&token=${token}`, {
                         method: 'PUT'
                     })
                     .then(data => data.json())
-                    .then((data) => {
-                        console.log(val);
-                        data["name"] = val;
-                    })
-                    .then(() => $(currentElem).html($(".newVal").val().trim()))
+                    .then(() =>$(".newVal").replaceWith($newval)
+                    )
             }
-
-        })
+        });
     })
 }
 
@@ -160,19 +151,19 @@ function deleteItem() {
     })
 }
 
-function createNewItems(){
+function createNewItems() {
 
-    $(".add").click( function (e) {
+    $(".add").click(function (e) {
         let cardid = $(this).parent().parent().attr("id")
         var s = document.getElementsByName(`${cardid}`)[0];
-        s.addEventListener("change", value);
+        // s.addEventListener("change", value);
         var value = s.options[s.selectedIndex].value;
         var input = $(this).prev().val();
-       let post= fetch(`https://api.trello.com/1/checklists/${value}/checkItems?name=${input}&pos=bottom&checked=false&key=${key}&token=${token}`, {
-                method: 'POST'
-            }).then(res => res.json())
-            Promise.all([post])
-            .then((data)=>{
+        let post = fetch(`https://api.trello.com/1/checklists/${value}/checkItems?name=${input}&pos=bottom&checked=false&key=${key}&token=${token}`, {
+            method: 'POST'
+        }).then(res => res.json())
+        Promise.all([post])
+            .then((data) => {
                 CheckItemsDomElem(data);
             });
     })
@@ -182,7 +173,10 @@ function TrelloCall() {
     let cards = getBoardList(2).then(board => {
         return getCardLists(board["id"]).then(cards => cards.map(card => card))
     });
+    cardCall(cards);
+}
 
+function cardCall(cards) {
     let checklists = cards.then(cards => {
         return Promise.all(cards.map(v => getCheckLists(v["id"])))
     });
